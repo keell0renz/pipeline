@@ -2,7 +2,7 @@ from dotenv import dotenv_values
 from rich.table import Table
 from rich.console import Console
 from safetensors.torch import save_file, load_file
-from typing import Dict
+from typing import Dict, List, Tuple
 import logging
 import torch
 import os
@@ -25,7 +25,7 @@ def load_environment() -> None:
 
 def get_train_logger(run_id: str) -> logging.Logger:
     """
-    Get a logger for training logs. 
+    Get a logger for training logs.
     Logs are saved (DEBUG level) to a file in ./models/{run_id} directory and printed to the console (WARNING level).
     """
 
@@ -41,7 +41,9 @@ def get_train_logger(run_id: str) -> logging.Logger:
     ch = logging.StreamHandler()
     ch.setLevel(logging.WARNING)
 
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     fh.setFormatter(formatter)
     ch.setFormatter(formatter)
 
@@ -51,17 +53,36 @@ def get_train_logger(run_id: str) -> logging.Logger:
     return logger
 
 
-def health_check() -> None:
+def health_check(silent: bool = False) -> Tuple[bool, List[str]]:
     """
     Perform a health check.
+
+    Args:
+        silent (bool): Whether to print the health check results to the console. Defaults to False.
+
+    Returns:
+        Union[List[str], bool]:
+            List[str]: A list of issues found during the health check, if any.
+            bool: True if the health check passed.
     """
+
+    issues = []
 
     console = Console()
 
-    console.print(f"PyTorch Version: {torch.__version__}")
-    console.print(f"CUDA Version: {torch.version.cuda}")  # type: ignore
-    console.print(f"CUDA Available: {str(torch.cuda.is_available())}")
-    console.print("\n")
+    if not silent:
+        console.print(f"PyTorch Version: {torch.__version__}")
+
+    if torch.cuda.is_available():
+        if not silent:
+            console.print(f"CUDA Version: {torch.version.cuda}")  # type: ignore
+    else:
+        if not silent:
+            console.print("[bold red]No CUDA available![/bold red]")
+        issues.append("No CUDA available.")
+
+    if not silent:
+        console.print("\n")
 
     if torch.cuda.is_available():
         gpu_table = Table("ID", "GPU")
@@ -69,16 +90,26 @@ def health_check() -> None:
             gpu_table.add_row(f"GPU {i}", torch.cuda.get_device_name(i))
         console.print(gpu_table)
     else:
-        console.print("No GPUs available.")
+        if not silent:
+            console.print("[bold red]No GPUs available![/bold red]")
+        issues.append("No GPUs available.")
 
     env_vars = ["HF_REPOSITORY", "HF_TOKEN"]
     env_table = Table("Environment Variable", "Value")
 
     for var in env_vars:
-        value = os.getenv(var, "[bold red]NONE[/bold red]")
-        env_table.add_row(var, value)
+        value = os.getenv(var, None)
 
-    console.print(env_table)
+        if value is None:
+            issues.append(f"{var} is not set!")
+            env_table.add_row(var, "[bold red]NONE[/bold red]")
+        else:
+            env_table.add_row(var, value)
+
+    if not silent:
+        console.print(env_table)
+
+    return len(issues) == 0, issues
 
 
 def save_model_to_safetensors(model: torch.nn.Module, path: str) -> None:
