@@ -70,32 +70,34 @@ def health_check(silent: bool = False) -> Tuple[bool, List[str]]:
 
     console = Console()
 
-    if not silent:
-        console.print(f"PyTorch Version: {torch.__version__}")
+    config_table = Table("Configuration", "Value", show_header=False)
+
+    config_table.add_row("PyTorch", torch.__version__)
 
     if torch.cuda.is_available():
-        if not silent:
-            console.print(f"CUDA Version: {torch.version.cuda}")  # type: ignore
+        config_table.add_row("CUDA", torch.version.cuda)  # type: ignore
     else:
-        if not silent:
-            console.print("[bold red]No CUDA available![/bold red]")
+        config_table.add_row("CUDA", "[bold red]NOT AVAILABLE![/bold red]")
         issues.append("No CUDA available.")
 
     if not silent:
-        console.print("\n")
+        console.print(config_table)
 
     if torch.cuda.is_available():
-        gpu_table = Table("ID", "GPU")
+        gpu_table = Table("ID", "GPU", show_header=False)
+        
         for i in range(torch.cuda.device_count()):
             gpu_table.add_row(f"GPU {i}", torch.cuda.get_device_name(i))
-        console.print(gpu_table)
+
+        if not silent:
+            console.print(gpu_table)
     else:
         if not silent:
             console.print("[bold red]No GPUs available![/bold red]")
         issues.append("No GPUs available.")
 
     env_vars = ["HF_REPOSITORY", "HF_TOKEN"]
-    env_table = Table("Environment Variable", "Value")
+    env_table = Table("Environment Variable", "Value", show_header=False)
 
     for var in env_vars:
         value = os.getenv(var, None)
@@ -108,6 +110,12 @@ def health_check(silent: bool = False) -> Tuple[bool, List[str]]:
 
     if not silent:
         console.print(env_table)
+
+    if not silent and len(issues) > 0:
+        console.print("[bold red]Health check failed![/bold red]")
+
+    if not silent and len(issues) == 0:
+        console.print("[bold green]Health check passed![/bold green]")
 
     return len(issues) == 0, issues
 
