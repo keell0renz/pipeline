@@ -18,16 +18,19 @@ def load_environment() -> None:
             os.environ[key] = value
 
 
-def get_train_logger(run_id: str) -> logging.Logger:
+def get_train_logger(directory: str) -> logging.Logger:
     """
-    Get a logger for training logs.
-    Logs are saved (DEBUG level) to a file in ./checkpoints/{run_id} directory and printed to the console (WARNING level).
+    Args:
+        directory (str): The directory to save the logs to.
+
+    Returns:
+        logging.Logger: A logger for training logs.
     """
 
-    log_file = f"./checkpoints/{run_id}/training.log"
+    log_file = f"./checkpoints/{directory}/training.log"
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
-    logger = logging.getLogger(run_id)
+    logger = logging.getLogger("train")
     logger.setLevel(logging.DEBUG)
 
     fh = logging.FileHandler(log_file)
@@ -36,9 +39,7 @@ def get_train_logger(run_id: str) -> logging.Logger:
     ch = logging.StreamHandler()
     ch.setLevel(logging.WARNING)
 
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     fh.setFormatter(formatter)
     ch.setFormatter(formatter)
 
