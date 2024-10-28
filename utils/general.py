@@ -1,21 +1,5 @@
-from dotenv import dotenv_values
 import logging
 import os
-
-
-def load_environment() -> None:
-    """
-    Load environment variables from environment, if absent, load from .env file.
-
-    This is a convenience function for running Docker container of this repository.
-    """
-
-    dotenv_path = ".env"
-    env_vars = dotenv_values(dotenv_path)
-
-    for key, value in env_vars.items():
-        if key not in os.environ and value is not None:
-            os.environ[key] = value
 
 
 def get_train_logger(directory: str) -> logging.Logger:
