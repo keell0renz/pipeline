@@ -1,4 +1,5 @@
-from pipeline.utils import load_environment, health_check
+from utils.general import load_environment
+from utils.health import health_check
 import typer
 
 load_environment()
@@ -12,8 +13,7 @@ def health():
     Check the health of the environment.
     """
 
-    passed, _ = health_check()
-    if not passed:
+    if not health_check():
         typer.Exit(code=1)
 
 
