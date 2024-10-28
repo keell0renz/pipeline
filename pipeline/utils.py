@@ -1,6 +1,6 @@
 from dotenv import dotenv_values
 from rich.table import Table
-from rich.console import Console
+from rich import print
 from safetensors.torch import save_file, load_file
 from typing import Dict, List, Tuple
 import logging
@@ -65,10 +65,7 @@ def health_check(silent: bool = False) -> Tuple[bool, List[str]]:
             List[str]: A list of issues found during the health check, if any.
             bool: True if the health check passed.
     """
-
     issues = []
-
-    console = Console()
 
     config_table = Table("Configuration", "Value", show_header=False)
 
@@ -81,19 +78,19 @@ def health_check(silent: bool = False) -> Tuple[bool, List[str]]:
         issues.append("No CUDA available.")
 
     if not silent:
-        console.print(config_table)
+        print(config_table)
 
     if torch.cuda.is_available():
         gpu_table = Table("ID", "GPU", show_header=False)
-        
+
         for i in range(torch.cuda.device_count()):
             gpu_table.add_row(f"GPU {i}", torch.cuda.get_device_name(i))
 
         if not silent:
-            console.print(gpu_table)
+            print(gpu_table)
     else:
         if not silent:
-            console.print("[bold red]No GPUs available![/bold red]")
+            print("[bold red]No GPUs available![/bold red]")
         issues.append("No GPUs available.")
 
     env_vars = ["HF_REPOSITORY", "HF_TOKEN"]
@@ -109,13 +106,13 @@ def health_check(silent: bool = False) -> Tuple[bool, List[str]]:
             env_table.add_row(var, value)
 
     if not silent:
-        console.print(env_table)
+        print(env_table)
 
     if not silent and len(issues) > 0:
-        console.print("[bold red]Health check failed![/bold red]")
+        print("[bold red]Health check failed![/bold red]")
 
     if not silent and len(issues) == 0:
-        console.print("[bold green]Health check passed![/bold green]")
+        print("[bold green]Health check passed![/bold green]")
 
     return len(issues) == 0, issues
 
