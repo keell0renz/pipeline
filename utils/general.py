@@ -21,10 +21,10 @@ def load_environment() -> None:
 def get_train_logger(run_id: str) -> logging.Logger:
     """
     Get a logger for training logs.
-    Logs are saved (DEBUG level) to a file in ./models/{run_id} directory and printed to the console (WARNING level).
+    Logs are saved (DEBUG level) to a file in ./checkpoints/{run_id} directory and printed to the console (WARNING level).
     """
 
-    log_file = f"./models/{run_id}/training.log"
+    log_file = f"./checkpoints/{run_id}/training.log"
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
     logger = logging.getLogger(run_id)
